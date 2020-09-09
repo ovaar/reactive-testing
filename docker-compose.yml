@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+    lighting-base-image:
+        image: lighting-base-image
+        build:
+            context: ./lighting/base
+            dockerfile: Dockerfile
+
+    lighting-message-broker:
+        image: eclipse-mosquitto:1.6.9
+        restart: always
+        hostname: mosquitto
+        restart: unless-stopped
+        container_name: lighting-message-broker
+        volumes:
+            - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+        ports:
+            - 1883:1883
+
+    lighting-core:
+        image: lighting-core
+        restart: always
+        depends_on:
+            - lighting-message-broker
+        build:
+            context: ./lighting/core
+            dockerfile: Dockerfile
+        environment:
+            - MQTT_HOST=lighting-message-broker
+            - MQTT_PORT=1883

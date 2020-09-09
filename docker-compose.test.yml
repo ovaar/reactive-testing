@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+    lighting-integration-tests:
+        image: lighting-integration-tests
+        build:
+            context: ./lighting/integration_tests
+            dockerfile: Dockerfile
+        network_mode: host
+        environment:
+            - MQTT_HOST=localhost
+            - MQTT_PORT=1883
+        ports:
+            - 5678:5678
