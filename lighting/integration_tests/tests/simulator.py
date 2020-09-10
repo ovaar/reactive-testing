@@ -17,29 +17,45 @@ class LightbulbSimulator(object):
     _future_connected: asyncio.Future
 
     def on_connect(self, client, userdata, flags, rc) -> None:
-        print("LightbulbSimulator::Connected with result code "+str(rc))
-        self._mqttc.subscribe(f'lights/{self._lightbulb.uuid}/state/get')
-        self._mqttc.subscribe(f'lights/{self._lightbulb.uuid}/function/on')
-        self._mqttc.subscribe(f'lights/{self._lightbulb.uuid}/function/off')
+        if rc != 0:
+            print(f"LightbulbSimulator::on_connect connection error result code={str(rc)}")
+            return
 
-        data = Structs.s_lights_connected(1)
-        self._mqttc.publish(f'lights/connect/{self._lightbulb.uuid}', payload=data.to_json(), qos=1, retain=True)
-        self._future_connected.set_result(rc)
-        print(f'LightbulbSimulator:: Lightbulb={self._lightbulb.uuid} connected')
+        try:
+            self._mqttc.subscribe(f'lights/{self._lightbulb.uuid}/state/get')
+            self._mqttc.subscribe(f'lights/{self._lightbulb.uuid}/function/on')
+            self._mqttc.subscribe(f'lights/{self._lightbulb.uuid}/function/off')
+
+            data = Structs.s_lights_connected(1)
+            self._mqttc.publish(f'lights/connect/{self._lightbulb.uuid}', payload=data.to_json(), qos=1, retain=True)
+            self._future_connected.set_result(rc)
+            print(f'LightbulbSimulator::on_connect Lightbulb={self._lightbulb.uuid} connected')
+        except Exception as e:
+            print(f'LightbulbSimulator: Error {str(e)}')
 
     def on_message(self, client, userdata, msg: mqtt.MQTTMessage) -> None:
         print(f"LightbulbSimulator::on_message topic={msg.topic} payload={msg.payload}")
-        if msg.topic == f'lights/{self._lightbulb.uuid}/state/get':
-            payload = Structs.s_lights_state(self._lightbulb.state or 'unknown')
-            self._mqttc.publish(f'lights/{self._lightbulb.uuid}/state', payload.to_json())
-        elif msg.topic == f'lights/{self._lightbulb.uuid}/function/on':
-            self._lightbulb.state = Enum.LIGHTS_STATE.ON.value
-            payload = Structs.s_lights_state(self._lightbulb.state)
-            self._mqttc.publish(f'lights/{self._lightbulb.uuid}/state', payload.to_json())
-        elif msg.topic == f'lights/{self._lightbulb.uuid}/function/off':
-            self._lightbulb.state = Enum.LIGHTS_STATE.OFF.value
-            payload = Structs.s_lights_state(self._lightbulb.state)
-            self._mqttc.publish(f'lights/{self._lightbulb.uuid}/state', payload.to_json())
+
+        try:
+            if msg.topic == f'lights/{self._lightbulb.uuid}/state/get':
+                payload = Structs.s_lights_state(self._lightbulb.state or 'UNKNOWN')
+                self._mqttc.publish(f'lights/{self._lightbulb.uuid}/state', payload.to_json())
+                print(
+                    f"LightbulbSimulator::on_message public topic=lights/{self._lightbulb.uuid}/state payload={payload}")
+            elif msg.topic == f'lights/{self._lightbulb.uuid}/function/on':
+                self._lightbulb.state = Enum.LIGHTS_STATE.ON.value
+                payload = Structs.s_lights_state(self._lightbulb.state)
+                self._mqttc.publish(f'lights/{self._lightbulb.uuid}/state', payload.to_json())
+                print(
+                    f"LightbulbSimulator::on_message public topic=lights/{self._lightbulb.uuid}/state payload={payload}")
+            elif msg.topic == f'lights/{self._lightbulb.uuid}/function/off':
+                self._lightbulb.state = Enum.LIGHTS_STATE.OFF.value
+                payload = Structs.s_lights_state(self._lightbulb.state)
+                self._mqttc.publish(f'lights/{self._lightbulb.uuid}/state', payload.to_json())
+                print(
+                    f"LightbulbSimulator::on_message public topic=lights/{self._lightbulb.uuid}/state payload={payload}")
+        except Exception as e:
+            print(f'LightbulbSimulator: Error {str(e)}')
 
     async def connect_as(self,
                          host: str,

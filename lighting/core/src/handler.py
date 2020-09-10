@@ -24,17 +24,27 @@ class MessageHandler(object):
             del self._context.lights[key]
         if data.state == 1:  # Connected
             self._context.lights[key] = Enum.LIGHTS_STATE.OFF
-            print(f'lights/{key}/state/get')
+            print(f'MessageHandler::on_lights_connected publish lights/{key}/state/get')
             self._mqttc.publish(f'lights/{key}/state/get', payload=None, qos=1, retain=True)
 
     def on_lights_state(self, topic: str, payload: str, args: List[str]) -> None:
         data = Structs.s_lights_state.from_json(payload)
         key: str = args[0]
         self._context.lights[key] = Enum.LIGHTS_STATE(data.newState)
+        print(f'MessageHandler::on_lights_state newState={self._context.lights[key]}')
 
     def on_lights_function_on(self, topic: str, payload: str, args: List[str]) -> None:
         # Set the state
-        state = Enum.LIGHTS_STATE.ON
+        state = Enum.LIGHTS_STATE.ON.value.lower()
         for light_id in self._context.lights.keys():
             # Publish state change
-            self._mqttc.publish(f'lights/{light_id}/function/{state.value}', payload=None, qos=1, retain=True)
+            print(f'MessageHandler::on_lights_function_on publish topic=lights/{light_id}/function/{state}')
+            self._mqttc.publish(f'lights/{light_id}/function/{state}', payload=None, qos=1, retain=True)
+
+    def on_lights_function_off(self, topic: str, payload: str, args: List[str]) -> None:
+        # Set the state
+        state = Enum.LIGHTS_STATE.OFF.value.lower()
+        for light_id in self._context.lights.keys():
+            # Publish state change
+            print(f'MessageHandler::on_lights_function_off publish topic=lights/{light_id}/function/{state}')
+            self._mqttc.publish(f'lights/{light_id}/function/{state}', payload=None, qos=1, retain=True)

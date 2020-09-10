@@ -19,7 +19,8 @@ def main():
     dict_topic_callback: Dict[str, Callable[[str, str, List[str]], None]] = {
         'lights/connect/+': message_handler.on_lights_connected,
         'lights/+/state': message_handler.on_lights_state,
-        'lights/function/on': message_handler.on_lights_function_on
+        'lights/function/on': message_handler.on_lights_function_on,
+        'lights/function/off': message_handler.on_lights_function_off
     }
     list_topics: List[str] = dict_topic_callback.keys()
 

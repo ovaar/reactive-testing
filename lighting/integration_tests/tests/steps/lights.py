@@ -26,12 +26,15 @@ def create_light(light_id: str, test_context: Data.TestContext, create_observabl
     test_context.lightbulbs[light_id] = lightbulb
 
 
-@given('the light <light_id> is turned off')
-def light_is_turned_off(light_id: str,  test_context: Data.TestContext):
+@given('the light <light_id> is turned <light_begin_state>')
+def light_is_turned_off(light_id: str,
+                        light_begin_state: str,
+                        test_context: Data.TestContext):
     assert isinstance(light_id, str)
+    assert isinstance(light_begin_state, str)
 
     lightbulb: Data.Lightbulb = test_context.lightbulbs[light_id]
-    lightbulb.state = Enum.LIGHTS_STATE.OFF.value
+    lightbulb.state = Enum.LIGHTS_STATE(light_begin_state).value
 
 
 @when('the lights are connected')
@@ -55,27 +58,23 @@ def connect_lights(
         loop.run_until_complete(wait_for_connected())
 
 
-@then('I turn on the lights')
-def turn_on_the_lights(mqttc: Mqtt.Client):
-    mqttc.publish('lights/function/on')
+@then('I use <light_function> to control the lights')
+def lights_function(light_function: str, mqttc: Mqtt.Client):
+    assert isinstance(light_function, str)
+    mqttc.publish(f'lights/function/{light_function}')
 
 
-@then('I turn off the lights')
-def turn_off_the_lights(mqttc: Mqtt.Client):
-    mqttc.publish('lights/function/off')
-
-
-@given('I expect the light <light_id> state to be <light_state>')
-def light_state_equals(light_state: str,
-                       light_id: str,
+@given('I expect the final state of light <light_id> to be <light_final_state>')
+def light_state_equals(light_id: str,
+                       light_final_state: str,
                        test_context: Data.TestContext,
                        loop: asyncio.AbstractEventLoop,
                        awaitables: List[RxObservable]):
-    assert isinstance(light_state, str)
     assert isinstance(light_id, str)
+    assert isinstance(light_final_state, str)
 
     def take_while_state(payload: Structs.s_lights_state) -> bool:
-        return payload.newState != light_state
+        return payload.newState != light_final_state
 
     timeout_sec = 10.0
     lightbulb: Data.Lightbulb = test_context.lightbulbs[light_id]
