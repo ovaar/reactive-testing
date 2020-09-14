@@ -37,4 +37,4 @@ class ReactiveListener(object):
             light_id = match.group(1)
             data = Structs.s_lights_state.from_json(msg.payload)
             lightbulb: Data.Lightbulb = self._test_context.lightbulbs[light_id]
-            lightbulb.observables.light_state.on_next(data)
+            lightbulb.light_state.on_next(data)

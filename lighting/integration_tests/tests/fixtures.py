@@ -68,23 +68,6 @@ def listener(mqttc):
 
 
 @pytest.fixture
-def create_observables():
-    observables: List[Data.Observables] = list()
-
-    def _create_observables() -> Data.Observables:
-        print('create: observables')
-        _observables = Data.Observables()
-        observables.append(_observables)
-        return _observables
-
-    yield _create_observables
-
-    for o in observables:
-        o.complete()
-    print('exit: observables')
-
-
-@pytest.fixture
 def test_context(loop, listener, awaitables):
     """
     This fixtures needs to hold references to all session fixtures
@@ -93,4 +76,8 @@ def test_context(loop, listener, awaitables):
     """
     test_context = Data.TestContext()
     listener.set_test_context(test_context)
-    return test_context
+
+    yield test_context
+
+    for lightbulb in test_context.lightbulbs.values():
+        lightbulb.complete()

@@ -19,10 +19,9 @@ if TYPE_CHECKING:
 
 
 @given('I have a light with the id <light_id>')
-def create_light(light_id: str, test_context: Data.TestContext, create_observables):
+def create_light(light_id: str, test_context: Data.TestContext):
     assert isinstance(light_id, str)
-    observables: Data.Observables = create_observables()
-    lightbulb = Data.Lightbulb(light_id, observables)
+    lightbulb = Data.Lightbulb(light_id)
     test_context.lightbulbs[light_id] = lightbulb
 
 
@@ -79,7 +78,7 @@ def light_state_equals(light_id: str,
     timeout_sec = 10.0
     lightbulb: Data.Lightbulb = test_context.lightbulbs[light_id]
 
-    observable: RxObservable = lightbulb.observables.light_state.pipe(
+    observable: RxObservable = lightbulb.light_state.pipe(
         RxOp.timeout(timeout_sec),
         RxOp.observe_on(scheduler=AsyncIOScheduler(loop)),
         RxOp.take_while(take_while_state, inclusive=True),

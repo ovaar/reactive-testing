@@ -2,24 +2,17 @@ from typing import Dict, Optional
 import rx.subject as RxSubject
 
 
-class Observables(object):
+class Lightbulb(object):
+    uuid: str
+    state: Optional[str] = None
     light_state: RxSubject.Subject
 
-    def __init__(self):
+    def __init__(self, uuid: str):
+        self.uuid = uuid
         self.light_state = RxSubject.Subject()
 
     def complete(self):
         self.light_state.on_completed()
-
-
-class Lightbulb(object):
-    uuid: str
-    state: Optional[str] = None
-    observables: Observables
-
-    def __init__(self, uuid: str, observables: Observables):
-        self.uuid = uuid
-        self.observables = observables
 
 
 class TestContext(object):
